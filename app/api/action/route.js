@@ -85,8 +85,10 @@ export async function POST(request){
       assert(room.status==='open','Sesi sudah ditutup.');
       const q=await getActiveQuestion(room);
       assert(acceptsTimedAnswer(timerState(q)),'Waktu menjawab belum dimulai, dijeda, atau sudah habis.');
+      if(q.type==='quiz')assert(!q.revealed,'Kuis sudah selesai dan kunci jawaban ditampilkan. Tunggu pertanyaan berikutnya.',409);
       const value=validateAnswer(q,b.value);
       const name=cleanText(b.name||'Anonim',60)||'Anonim';
+      if(q.type==='quiz')assert(name.toLowerCase()!=='anonim'&&name.length>=2,'Masukkan nama atau alias untuk mengikuti Quiz Battle.');
       await db('responses',{method:'POST',body:{question_id:q.id,room_code:room.code,visitor_id:visitorId,display_name:name,value}});
       return ok({message:'Jawaban berhasil dikirim.'});
     }

@@ -19,15 +19,18 @@ export async function GET(request){
     // Data jawaban tidak pernah diberikan ke publik saat hasil disembunyikan.
     const responses=q?await db('responses',{filters:{question_id:`eq.${q.id}`},order:'created_at.asc',limit:1000}):[];
     const revealed=!!q?.revealed;
+    const canShowLeaderboard=admin || (!!q && q.type==='quiz' && revealed);
+    const leaderboard=canShowLeaderboard ? await db('rpc/il_quiz_leaderboard',{method:'POST',body:{p_room_code:code,p_public:!admin}}) : [];
     const result=(admin||revealed)&&q?aggregate(q,responses):null;
     let hasAnswered=false;
     const visitorId=url.searchParams.get('visitorId')||'';
     if(visitorId && /^[a-zA-Z0-9_-]{16,100}$/.test(visitorId))hasAnswered=responses.some(r=>r.visitor_id===visitorId);
     const data={ok:true,server_now:new Date().toISOString(),timer:q?timerState(q):null,room:{code:room.code,title:room.title,status:room.status,theme:room.theme,active_question_id:room.active_question_id},
-      question:protectQuestion(q,admin||revealed),count:responses.length,result:revealed||admin?result:null,hasAnswered};
+      question:protectQuestion(q,admin||revealed),count:responses.length,result:revealed||admin?result:null,leaderboard:leaderboard.map(({visitor_id,...entry})=>entry),hasAnswered};
     if(admin){
+      data.leaderboard=leaderboard;
       data.questions=questions.map(qq=>({id:qq.id,ord:qq.ord,text:qq.text,type:qq.type,options:qq.options,config:qq.config,revealed:qq.revealed,timer_seconds:qq.timer_seconds||0}));
-      data.responses=responses.map(r=>({id:r.id,name:r.display_name,value:r.value,at:r.created_at})).reverse();
+      data.responses=responses.map(r=>({id:r.id,name:r.display_name,value:r.value,at:r.created_at,score_points:r.score_points||0,is_correct:r.is_correct})).reverse();
       data.admin=true;
     }
     return NextResponse.json(data,{headers:{'Cache-Control':'no-store, max-age=0'}});

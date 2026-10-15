@@ -48,3 +48,21 @@ console.log('✓ 8 source files passed node --check');
 console.log('✓ 8 aggregation checks passed');
 
 console.log('✓ 9 timer behavior checks passed');
+
+// Scoring acuan: nilai nyata dipaksakan oleh trigger SQL dengan waktu database.
+const scoreSrc=readFileSync(join(root,'lib/quiz-score.js'),'utf8');
+const {previewQuizScore}=await import('data:text/javascript;base64,'+Buffer.from(scoreSrc).toString('base64'));
+assert.equal(previewQuizScore({correct:true}),1000);
+assert.equal(previewQuizScore({correct:false,durationSeconds:60,remainingMs:60000}),0);
+assert.equal(previewQuizScore({correct:true,durationSeconds:60,remainingMs:60000}),1500);
+assert.equal(previewQuizScore({correct:true,durationSeconds:60,remainingMs:30000}),1250);
+assert.equal(previewQuizScore({correct:true,durationSeconds:60,remainingMs:0}),1000);
+assert.equal(previewQuizScore({correct:true,durationSeconds:60,remainingMs:999999}),1500);
+assert.equal(previewQuizScore({correct:true,durationSeconds:60,remainingMs:-100}),1000);
+const stateSrc=readFileSync(join(root,'app/api/state/route.js'),'utf8');
+assert.match(stateSrc,/p_public:!admin/);
+const triggerSQL=readFileSync(join(root,'supabase/upgrade_v2_1_to_v2_2.sql'),'utf8');
+assert.match(triggerSQL,/clock_timestamp\(\)/);
+assert.match(triggerSQL,/QUIZ_ALREADY_REVEALED/);
+assert.match(triggerSQL,/score_points := 1000 \+ round\(500/);
+console.log('✓ 7 scoring formula tests + 4 server-side protection checks passed');

@@ -5,6 +5,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { Maximize2, Minimize2, Sparkles, Users, Clock3, ArrowRight, MonitorPlay } from 'lucide-react';
 import Brand from '@/components/Brand';
 import Countdown from '@/components/Countdown';
+import Leaderboard from '@/components/Leaderboard';
 import { Results } from '@/components/Results';
 import { state } from '@/lib/client';
 import { labelFor } from '@/lib/catalog';
@@ -20,7 +21,7 @@ export default function Screen(){
     <Countdown timer={data?.timer?{...data.timer,client_offset_ms:data.server_offset_ms||0}:null} large/>
     <div className="screen-stats"><div><strong>{data?.count||0}</strong><span>Jawaban masuk</span></div><div><strong>{room?.status!=='open'?'PAUSED':data?.timer?.status==='finished'?'SELESAI':data?.timer?.status==='ready'?'SIAP':data?.timer?.status==='paused'?'JEDA':'LIVE'}</strong><span>Status sesi</span></div></div>
     <div className="screen-code-bottom"><span>JOIN WITH CODE</span><strong>{roomCode}</strong></div>
-  </div><div className="screen-right">{!data?<div className="empty-panel">{error||'Memuat layar presentasi...'}</div>:!q?<div className="waiting-screen"><Clock3 size={70}/><h2>Get ready!</h2><p>Pertanyaan akan segera tampil.</p></div>:q.revealed?<div className="screen-result-card"><span className="eyebrow"><Sparkles size={15}/> LIVE RESULTS</span><Results question={q} result={data.result} large/></div>:<div className="screen-join-card"><span className="eyebrow">JOIN THE CONVERSATION</span><div className="qr-projection">{origin&&<QRCodeSVG value={`${origin}/join/${roomCode}`} size={225}/>}</div><p>Scan untuk menjawab</p><strong className="projection-code">{roomCode}</strong><span className="join-url">{origin?`${origin.replace(/^https?:\/\//,'')}/join/${roomCode}`:`/join/${roomCode}`}</span></div>}</div></div>
+  </div><div className="screen-right">{!data?<div className="empty-panel">{error||'Memuat layar presentasi...'}</div>:!q?<div className="waiting-screen"><Clock3 size={70}/><h2>Get ready!</h2><p>Pertanyaan akan segera tampil.</p></div>:q.revealed?<div className="screen-result-card"><span className="eyebrow"><Sparkles size={15}/> LIVE RESULTS</span>{q.type==='quiz'&&<Leaderboard rows={data.leaderboard||[]} heading="Leaderboard Quiz Battle" projection/>}<Results question={q} result={data.result} large/></div>:<div className="screen-join-card"><span className="eyebrow">JOIN THE CONVERSATION</span><div className="qr-projection">{origin&&<QRCodeSVG value={`${origin}/join/${roomCode}`} size={225}/>}</div><p>Scan untuk menjawab</p><strong className="projection-code">{roomCode}</strong><span className="join-url">{origin?`${origin.replace(/^https?:\/\//,'')}/join/${roomCode}`:`/join/${roomCode}`}</span></div>}</div></div>
   <footer className="screen-footer"><span>INSIGHTLIVE · INTERACTIVE PRESENTATIONS</span><span>{q?.revealed?'Hasil ditampilkan presenter':'Menunggu respons audiens'} <ArrowRight size={17}/></span></footer>
  </main>
 }

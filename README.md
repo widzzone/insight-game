@@ -1,8 +1,12 @@
-# InsightLive — Vercel + Supabase + Gemini AI
+# InsightLive V2.2 — Vercel + Supabase + Gemini
 
 Aplikasi presentasi interaktif (berbahasa Indonesia) dengan 7 format pertanyaan, layar presenter, layar peserta dan proyektor. Kode sumber siap untuk diimpor ke GitHub/Vercel; **belum di-deploy** dan memerlukan kredensial pengguna.
 
-## V2.1 — Pembaruan dari V2 (BACA INI DULU)
+## V2.2 — Quiz Battle
+
+Lihat `MULAI_DI_SINI.md` untuk upgrade **dari V2.1 ke V2.2**. Skor Quiz diproses dan divalidasi di Supabase, dan klasemen diakumulasi untuk seluruh Quiz dalam satu room.
+
+## V2.1 — Pembaruan dari V2 (langkah historis)
 
 Jika sebelumnya **sudah menggunakan V2 Supabase di Vercel**, jangan buat database baru dan jangan hapus room lama.
 
@@ -102,7 +106,7 @@ Akses <http://localhost:3000>, login dengan `ADMIN_PIN` dan buat sesi.
 - Event sudah menggunakan polling 4 detik, **bukan** WebSocket. Skala besar perlu Supabase Realtime/optimasi agregasi server.
 - Setiap analisis Gemini memproses maksimal **300 jawaban**, sedangkan halaman mengambil maksimal **1.000** jawaban untuk hasil. Untuk event skala lebih besar tambahkan pagination dan job queue.
 - Kategori AI bisa keliru, mohon tinjau sebelum menampilkan hasil. Respons peserta dikirim ke Gemini saat analisis; jangan memasukkan data pribadi yang sensitif.
-- Tipe kuis ini adalah **kuis pilihan ganda dengan reveal jawaban benar**, belum memiliki ranking poin atau leaderboard (timer per-pertanyaan tersedia).
+- Quiz Battle sudah memiliki skor, bonus waktu, dan leaderboard. Identitas berbasis browser tidak mencegah multi-identitas, jadi belum cocok untuk perlombaan berhadiah besar.
 - Belum ada pembatasan rate login PIN ataupun endpoint peserta untuk penggunaan publik berskala besar. Tambahkan rate limit (Upstash/Cloudflare) sebelum traffic besar.
 - Data nyata/konfigurasi belum diuji end-to-end di Supabase, Gemini, atau Vercel tanpa kredensial yang sah. File disediakan sebagai starter proyek yang dapat dikembangkan.
 
@@ -125,7 +129,7 @@ supabase/schema.sql           # SQL database
 
 ## Pengembangan yang disarankan
 
-- Quiz leaderboard dan sistem poin (timer countdown per pertanyaan sudah tersedia).
+- Pengembangan Quiz Battle berikutnya: autentikasi peserta, anti-cheat, dan efek transisi peringkat.
 - Q&A dengan likes, moderation dan peringkat pertanyaan.
 - Preset template pertanyaan, menyimpan draft, urutan drag-drop.
 - Grafik export PNG/PDF, laporan AI multi-pertanyaan.

@@ -55,3 +55,28 @@ input,textarea,select{background:#fff;border:1px solid #dedfea;border-radius:11p
 .countdown.timer-urgent .countdown-digits{animation:countdown-alert 1s ease-in-out infinite}
 @keyframes countdown-alert{0%,100%{opacity:1}50%{opacity:.68}}
 @media(prefers-reduced-motion:reduce){.countdown.timer-urgent .countdown-digits{animation:none}}
+
+/* Quiz Battle leaderboard (V2.2) */
+.quiz-rules{display:flex;align-items:flex-start;gap:10px;color:#6557af;font-size:12px;line-height:1.55;padding:13px 14px;border:1px solid #e8e0ff;border-radius:13px;background:#f5f1ff;margin:12px 0 15px}
+.quiz-rules svg{flex-shrink:0;margin-top:1px}
+.leaderboard{margin-top:20px;border:1px solid #e8e8f1;border-radius:17px;background:#fff;padding:18px}
+.leaderboard-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+.leaderboard-heading h3{font-size:19px;line-height:1.2;margin:5px 0 0}
+.leaderboard-list{display:flex;flex-direction:column;gap:9px}
+.leaderboard-row{display:flex;gap:13px;align-items:center;background:#faf9fd;border:1px solid #f0eef7;border-radius:14px;padding:12px 14px}
+.leaderboard-first{background:linear-gradient(95deg,#f3efff,#fff);border-color:#ded4ff}
+.leaderboard-position{flex:0 0 34px;color:var(--brand);font-size:15px;font-weight:850;text-align:center}
+.leaderboard-first .leaderboard-position{color:#e5a43a}
+.leaderboard-name{min-width:0;flex:1;display:flex;flex-direction:column;gap:4px}
+.leaderboard-name strong{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.leaderboard-name small{color:var(--muted);font-size:11px}
+.leaderboard-score{white-space:nowrap;font-size:20px;font-variant-numeric:tabular-nums;color:var(--brand)}
+.leaderboard-score small{font-size:11px;color:#9999ac;font-weight:700}
+.leaderboard-note{font-size:11px;color:#9a9caf;line-height:1.6;margin:15px 0 0}
+.leaderboard-projection{padding:16px;margin-top:25px}
+.leaderboard-projection .leaderboard-row{padding:10px 13px}
+.leaderboard-projection .leaderboard-row:nth-child(n+6){display:none}
+.leaderboard-projection .leaderboard-note{display:none}
+@media(max-width:700px){.leaderboard{padding:12px}.leaderboard-row{padding:9px;gap:8px}.leaderboard-score{font-size:16px}.leaderboard-name strong{font-size:12px}.leaderboard-position{flex-basis:25px}.leaderboard-projection{margin-top:15px}}
+
+.q-score-inline{font-weight:800;color:var(--brand)}

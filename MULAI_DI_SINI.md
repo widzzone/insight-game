@@ -1,28 +1,28 @@
-# InsightLive V2.1 — Update Vercel + Supabase + Gemini
+# InsightLive V2.2 — Upgrade Quiz Battle
 
-Ini adalah **revisi V2 yang Anda pilih** (bukan versi Google Sheets). Tampilan aslinya dipertahankan.
+**Anda menggunakan InsightLive V2.1 di Vercel + Supabase.** Versi ini tidak memerlukan project Vercel/Supabase baru dan tidak membutuhkan environment variable tambahan.
 
-## Yang berubah
+1. Buka **Supabase → SQL Editor** di project lama.
+2. Tempel dan jalankan seluruh isi `supabase/upgrade_v2_1_to_v2_2.sql`. Ini menambahkan perhitungan skor, leaderboard, dan pengecekan waktu pada penyimpanan jawaban. Data lama tidak dihapus.
+3. Upload semua source code dari paket V2.2 ke repository GitHub yang digunakan deployment V2.1.
+4. Lakukan redeploy di Vercel (biasanya otomatis setelah commit). **Jangan** mempublikasikan `.env.local` maupun kunci rahasia.
+5. Buka room, pilih tipe **Quiz**, isi jawaban benar dan durasi timer; aktifkan pertanyaan dan klik **Mulai**.
+6. Peserta **wajib memasukkan nama/alias** untuk masuk leaderboard. Di menu **Hasil Langsung** presenter dapat melihat skor; menu **Leaderboard** menampilkan keseluruhan skor semua soal Quiz.
+7. Klik **Publikasikan hasil** agar peserta dan layar proyektor melihat jawaban benar beserta klasemen. Nama peserta akan terlihat kepada audiens.
 
-- **Tidak ada lagi teks AI/Gemini di website**: "AI Insight" menjadi "Insight", "AI Summary" menjadi "Ringkasan Hasil", "Analisis Gemini" menjadi "Analisis jawaban", termasuk landing page, halaman presenter, peserta, dan layar proyektor.
-- **Timer per pertanyaan**: pilih 15, 30, 45, 60, 90, 120, 180, 300, atau 600 detik; atau tanpa timer.
-- Timer bisa **Mulai**, **Jeda/Lanjutkan**, dan **Ulangi** melalui menu Pertanyaan atau Hasil Langsung.
-- Timer tampak di HP peserta dan layar proyektor, diperbarui setiap detik. Status disimpan di server, sehingga waktu tidak kembali ke awal hanya karena refresh.
-- Saat belum dimulai, dijeda, atau habis, server **menolak jawaban baru**. Peserta bisa menunggu timer dimulai lagi.
-- Menu `Live responses` diganti menjadi **Hasil Langsung** agar lebih jelas.
+### Aturan skor
 
-## Cara upgrade bila V2 sudah deploy
+- Benar = **1.000 poin**; salah = **0 poin**.
+- Jika memakai timer, benar mendapat **bonus 0–500 poin** bergantung sisa waktu pada server: total **1.000–1.500**.
+- Tanpa timer, benar mendapat **1.000 poin**.
+- Skor Quiz dari berbagai pertanyaan dalam room yang sama diakumulasikan.
+- Jika poin sama, jumlah jawaban benar dan rata-rata waktu menjawab dipakai sebagai pemecah seri.
+- Jawaban Quiz yang masuk sebelum upgrade mendapat 1.000 poin jika benar tanpa bonus waktu, karena waktu respons aslinya tidak bisa diverifikasi secara penuh.
+- Klasemen umum publik hanya menghitung soal Quiz yang **hasilnya sudah dipublikasikan**. Presenter melihat semua skor.
 
-1. **Supabase → SQL Editor**: jalankan isi file `supabase/upgrade_v2_to_v2_1.sql`.
-2. **GitHub/Vercel**: ganti project V2 dengan file dari folder project yang baru ini, commit, lalu deploy ulang.
-3. **Tidak perlu** membuat database baru dan **tidak perlu mengganti** environment variables. Data yang ada dipertahankan oleh SQL migration.
-4. Buka room presenter. Di **Pertanyaan → Kontrol sesi**, pilih durasi timer pada pertanyaan aktif (bahkan jika pertanyaan sudah pernah mendapatkan jawaban), lalu klik **Mulai**.
-5. Pengaturan durasi untuk pertanyaan baru juga tersedia di form **Tambah pertanyaan**.
+### Catatan penting
 
-**Bedanya menu:** `Pertanyaan` untuk membuat/mengatur jalannya sesi; `Hasil Langsung` untuk melihat jawaban dan kesimpulan sambil sesi berlangsung. Timer dapat dikontrol dari keduanya.
-
-**Penting:** Gemini API tetap digunakan di backend untuk fitur Insight, walaupun tidak disebut di antarmuka. Data jawaban yang dianalisis tetap dikirim ke layanan Gemini sesuai pemanggilan API. Timer bukan leaderboard; kuis belum memiliki ranking poin.
-
-## Batasan pengujian
-
-Pemeriksaan parse JSX/JS dan tes perhitungan lokal berhasil. Build Next.js/deployment Vercel end-to-end serta uji database Supabase dan Gemini secara nyata masih harus dilakukan di project Anda (akses kredensial tidak tersedia dalam paket ini).
+- Pastikan **SQL upgrade sudah dijalankan sebelum deployment V2.2**; jika belum, API dapat menampilkan error.
+- ID peserta disimpan di browser, sehingga leaderboard bersifat cocok untuk acara internal/semi-formal, **bukan untuk kompetisi hadiah bernilai tinggi**. Peserta dapat mengganti browser untuk membuat identitas lain.
+- Menjeda timer menghentikan hitungan mundur; bonus kecepatan bergantung pada sisa timer, bukan wall-clock elapsed time termasuk jeda.
+- Proyek belum diuji terhubung ke Supabase/Vercel asli karena tidak memiliki kredensial pengguna. Jalankan pengujian end-to-end dengan minimal 2 peserta sebelum acara.
