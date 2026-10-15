@@ -21,3 +21,37 @@ input,textarea,select{background:#fff;border:1px solid #dedfea;border-radius:11p
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
 .checkbox-label{display:flex!important;align-items:center;gap:10px;font-size:12px!important;color:#585b6f}.checkbox-label input{height:17px;width:17px;accent-color:var(--brand)}
+
+/* Timer per pertanyaan (V2.1) */
+.countdown{--timer-accent:var(--brand);display:flex;flex-direction:column;gap:8px;margin:14px 0;padding:18px 20px;background:var(--brand-soft);border:1px solid rgba(109,84,221,.17);border-radius:16px;color:var(--ink)}
+.countdown-heading{display:flex;align-items:center;gap:9px;color:var(--timer-accent);font-size:12px;font-weight:800;letter-spacing:.4px}
+.countdown-digits{font-variant-numeric:tabular-nums;letter-spacing:1px;font-size:40px;font-weight:850;line-height:1.1}
+.countdown-track{width:100%;height:8px;border-radius:20px;background:rgba(100,97,140,.13);overflow:hidden}
+.countdown-track>span{display:block;height:100%;background:var(--timer-accent);border-radius:20px;transition:width .25s linear}
+.countdown small{font-size:12px;font-weight:700;color:#797a90}
+.countdown-large{padding:23px 26px;margin:22px 0}
+.countdown-large .countdown-digits{font-size:clamp(46px,5vw,76px)}
+.timer-finished{--timer-accent:#dd7053;background:#fff1ed;border-color:#f2cfc4}
+.timer-paused{--timer-accent:#cd9428;background:#fff8e9;border-color:#efdfc0}
+.timer-ready{--timer-accent:#73819a;background:#f4f6fa;border-color:#e1e5ee}
+.timer-control-card{margin:17px 20px 21px;padding:14px;border:1px solid #eae7f3;border-radius:16px;background:#fcfbff}
+.timer-control-card .countdown{margin:0 0 12px}
+.timer-action-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start}
+.timer-action-row .btn{display:inline-flex;flex:1;justify-content:center;min-width:100px}
+.timer-control-card .field-hint{margin:12px 2px 2px}
+.join-card>.countdown{margin:-9px 0 20px}
+.screen-left .countdown{width:min(100%,400px);flex-shrink:0}
+.results-content>.countdown{margin-top:0}
+@media(max-width:700px){.screen-left .countdown{padding:9px 12px;gap:4px;margin:8px 0 0}.screen-left .countdown-digits{font-size:27px}.screen-left .countdown-track{height:4px}.screen-left .countdown-heading{font-size:10px}.screen-left .countdown small{font-size:10px}.timer-action-row .btn{min-width:85px}.timer-control-card{margin:12px}}
+.timer-config-row{padding:15px 20px;border-bottom:1px solid #f0eef7;display:flex;flex-direction:column;gap:7px}
+.timer-config-row label{font-size:13px;color:#292d47;font-weight:800}
+.timer-config-row select{margin:0;width:100%;background:#fff}
+.timer-config-row small{font-size:11px;color:#8d8fa2}
+.question-timer-label{display:inline-flex;align-items:center;gap:5px;width:fit-content;color:#777993;font-size:11px;margin-top:7px}
+.timer-sidebar-controls{border-bottom:1px solid #eeeaf7;padding-bottom:17px;margin-bottom:7px}
+.timer-sidebar-controls .countdown{margin:0 0 12px}
+.timer-sidebar-controls .timer-action-row .btn{padding:10px 8px;font-size:11px;min-width:65px}
+.countdown.timer-urgent{--timer-accent:#df5e4e;background:#fff2ef;border-color:#f4c5bb}
+.countdown.timer-urgent .countdown-digits{animation:countdown-alert 1s ease-in-out infinite}
+@keyframes countdown-alert{0%,100%{opacity:1}50%{opacity:.68}}
+@media(prefers-reduced-motion:reduce){.countdown.timer-urgent .countdown-digits{animation:none}}

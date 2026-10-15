@@ -50,3 +50,9 @@ revoke all on public.responses from anon, authenticated;
 grant select, insert, update, delete on public.rooms to service_role;
 grant select, insert, update, delete on public.questions to service_role;
 grant select, insert, update, delete on public.responses to service_role;
+
+-- Kolom timer V2.1 (juga aman jika schema ini dijalankan pada database lama)
+alter table public.questions
+  add column if not exists timer_seconds integer not null default 0,
+  add column if not exists timer_ends_at timestamptz,
+  add column if not exists timer_remaining_seconds integer;

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { AppError,assert,cleanText,safeEqual,requireConfig,requireAdmin,isAdmin,setAdminCookie,clearAdminCookie,db,getRoom,getQuestion,getActiveQuestion,newCode } from '@/lib/server';
 import { needsOptions } from '@/lib/catalog';
 import { analyzeWithGemini } from '@/lib/gemini';
+import { timerState, acceptsTimedAnswer } from '@/lib/timer';
 
 export const runtime='nodejs';
 export const maxDuration=60;
@@ -30,7 +31,9 @@ function parseQuestion(body){
     assert(Number.isInteger(correct)&&correct>=0&&correct<options.length,'Pilih kunci jawaban kuis.');
     config.correct=correct;
   }
-  return {text,type,options,config};
+  const timer_seconds=Number(body.timer_seconds??0);
+  assert(Number.isInteger(timer_seconds)&&timer_seconds>=0&&timer_seconds<=3600,'Durasi timer harus 0 hingga 3600 detik.');
+  return {text,type,options,config,timer_seconds};
 }
 function validateAnswer(q,value){
   assert(value&&typeof value==='object'&&!Array.isArray(value),'Jawaban tidak valid.');
@@ -81,6 +84,7 @@ export async function POST(request){
       const room=await getRoom(code);
       assert(room.status==='open','Sesi sudah ditutup.');
       const q=await getActiveQuestion(room);
+      assert(acceptsTimedAnswer(timerState(q)),'Waktu menjawab belum dimulai, dijeda, atau sudah habis.');
       const value=validateAnswer(q,b.value);
       const name=cleanText(b.name||'Anonim',60)||'Anonim';
       await db('responses',{method:'POST',body:{question_id:q.id,room_code:room.code,visitor_id:visitorId,display_name:name,value}});
@@ -107,7 +111,7 @@ export async function POST(request){
       const question=parseQuestion(b);
       const existing=await db('questions',{filters:{room_code:`eq.${code}`},order:'ord.desc',limit:1});
       assert((existing?.[0]?.ord||0)<50,'Maksimal 50 pertanyaan per sesi.');
-      const q=(await db('questions',{method:'POST',body:{room_code:code,...question,ord:(existing?.[0]?.ord||0)+1}}))[0];
+      const q=(await db('questions',{method:'POST',body:{room_code:code,...question,timer_ends_at:null,timer_remaining_seconds:null,ord:(existing?.[0]?.ord||0)+1}}))[0];
       if(!room.active_question_id)await db('rooms',{method:'PATCH',filters:{code:`eq.${code}`},body:{active_question_id:q.id}});
       return ok({id:q.id});
     }
@@ -116,12 +120,42 @@ export async function POST(request){
       const answers=await db('responses',{filters:{question_id:`eq.${q.id}`},select:'id',limit:1});
       assert(!answers.length,'Pertanyaan yang sudah dijawab tidak bisa diedit. Buat pertanyaan baru.');
       const changes=parseQuestion(b);
-      await db('questions',{method:'PATCH',filters:{id:`eq.${q.id}`},body:changes});return ok();
+      await db('questions',{method:'PATCH',filters:{id:`eq.${q.id}`},body:{...changes,timer_ends_at:null,timer_remaining_seconds:null}});return ok();
     }
     if(action==='activate'){
       const q=await getQuestion(String(b.questionId||''),code);
+      // Pertanyaan yang diaktifkan dimulai dengan timer penuh, tidak meneruskan timer lama.
+      if(room.active_question_id && room.active_question_id!==q.id){
+        await db('questions',{method:'PATCH',filters:{id:`eq.${room.active_question_id}`},body:{timer_ends_at:null,timer_remaining_seconds:null}});
+      }
+      await db('questions',{method:'PATCH',filters:{id:`eq.${q.id}`},body:{timer_ends_at:null,timer_remaining_seconds:null}});
       await db('rooms',{method:'PATCH',filters:{code:`eq.${code}`},body:{active_question_id:q.id}});
       return ok();
+    }
+    if(action==='setTimerDuration'){
+      const q=await getActiveQuestion(room);
+      const seconds=Number(b.timer_seconds);
+      assert(Number.isInteger(seconds)&&seconds>=0&&seconds<=3600,'Durasi timer harus 0 hingga 3600 detik.');
+      await db('questions',{method:'PATCH',filters:{id:`eq.${q.id}`},body:{timer_seconds:seconds,timer_ends_at:null,timer_remaining_seconds:null}});
+      return ok();
+    }
+    if(action==='startTimer'){
+      const q=await getActiveQuestion(room);
+      const timer=timerState(q);
+      assert(timer.status==='ready'||timer.status==='paused','Timer tidak siap dijalankan. Gunakan Ulangi untuk memulai dari awal.');
+      const ends_at=new Date(Date.now()+timer.remaining*1000).toISOString();
+      await db('questions',{method:'PATCH',filters:{id:`eq.${q.id}`},body:{timer_ends_at:ends_at,timer_remaining_seconds:null}});return ok();
+    }
+    if(action==='pauseTimer'){
+      const q=await getActiveQuestion(room);
+      const timer=timerState(q);
+      assert(timer.status==='running','Timer sedang tidak berjalan.');
+      await db('questions',{method:'PATCH',filters:{id:`eq.${q.id}`},body:{timer_ends_at:null,timer_remaining_seconds:timer.remaining}});return ok();
+    }
+    if(action==='resetTimer'){
+      const q=await getActiveQuestion(room);
+      assert(q.timer_seconds>0,'Timer belum diaktifkan untuk pertanyaan ini.');
+      await db('questions',{method:'PATCH',filters:{id:`eq.${q.id}`},body:{timer_ends_at:null,timer_remaining_seconds:null}});return ok();
     }
     if(action==='toggleRoom'){
       await db('rooms',{method:'PATCH',filters:{code:`eq.${code}`},body:{status:b.open?'open':'closed'}});return ok();
@@ -129,7 +163,7 @@ export async function POST(request){
     if(action==='toggleReveal'){
       const q=await getActiveQuestion(room);
       if(b.revealed&&q.type==='insight'){
-        assert(q.analysis,'Jalankan Gemini AI sebelum menampilkan hasil.');
+        assert(q.analysis,'Buat ringkasan jawaban sebelum menampilkan hasil.');
       }
       await db('questions',{method:'PATCH',filters:{id:`eq.${q.id}`},body:{revealed:!!b.revealed}});return ok();
     }
@@ -139,7 +173,7 @@ export async function POST(request){
     }
     if(action==='analyze'){
       const q=await getActiveQuestion(room);
-      assert(q.type==='insight','Analisis Gemini hanya tersedia untuk tipe AI Insight.');
+      assert(q.type==='insight','Analisis jawaban hanya tersedia untuk tipe Insight.');
       const answers=await db('responses',{filters:{question_id:`eq.${q.id}`},order:'created_at.asc',limit:301});
       assert(answers.length>0,'Belum ada jawaban.');
       assert(answers.length<=300,'Batas 300 jawaban untuk analisis sekali jalan.');
@@ -155,7 +189,7 @@ export async function POST(request){
     if(action==='resetQuestion'){
       const q=await getQuestion(String(b.questionId||''),code);
       await db('responses',{method:'DELETE',filters:{question_id:`eq.${q.id}`},prefer:'return=minimal'});
-      await db('questions',{method:'PATCH',filters:{id:`eq.${q.id}`},body:{analysis:null,analyzed_count:0,revealed:false}});
+      await db('questions',{method:'PATCH',filters:{id:`eq.${q.id}`},body:{analysis:null,analyzed_count:0,revealed:false,timer_ends_at:null,timer_remaining_seconds:null}});
       return ok();
     }
     throw new AppError('Aksi tidak dikenali.',404);

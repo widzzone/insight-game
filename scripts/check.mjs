@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 const root=dirname(dirname(fileURLToPath(import.meta.url)));
-for(const path of ['lib/server.js','lib/gemini.js','lib/results.js','lib/client.js','lib/catalog.js','app/api/action/route.js','app/api/state/route.js']){
+for(const path of ['lib/server.js','lib/gemini.js','lib/results.js','lib/client.js','lib/catalog.js','lib/timer.js','app/api/action/route.js','app/api/state/route.js']){
   execFileSync(process.execPath,['--check',join(root,path)],{stdio:'pipe'});
 }
 // Menguji logika yang tidak membutuhkan Next.js, Supabase, atau API key.
@@ -27,5 +27,24 @@ const open=aggregate({type:'open',options:[],config:{}},[mk({text:'Ide A'})]);
 assert.equal(open.items[0].text,'Ide A');
 const insight=aggregate({type:'insight',analysis:{categories:[]},analyzed_count:1},[mk({text:'jawaban1'}),mk({text:'jawaban2'})]);
 assert.equal(insight.stale,true);
-console.log('✓ 7 source files passed node --check');
+// Pengujian logika timer menggunakan jam simulasi (tanpa Supabase).
+const timerSrc=readFileSync(join(root,'lib/timer.js'),'utf8');
+const {timerState,clientTimer,formatCountdown,acceptsTimedAnswer}=await import('data:text/javascript;base64,'+Buffer.from(timerSrc).toString('base64'));
+const baseline=Date.parse('2026-10-15T10:00:00.000Z');
+const timerQuestion={timer_seconds:60,timer_ends_at:null,timer_remaining_seconds:null};
+assert.equal(timerState(timerQuestion,baseline).status,'ready');
+assert.equal(acceptsTimedAnswer(timerState(timerQuestion,baseline)),false);
+assert.equal(acceptsTimedAnswer(timerState({timer_seconds:0},baseline)),true);
+const ticking={...timerQuestion,timer_ends_at:new Date(baseline+60000).toISOString()};
+assert.equal(timerState(ticking,baseline+30000).remaining,30);
+assert.equal(timerState(ticking,baseline+30000).status,'running');
+assert.equal(acceptsTimedAnswer(timerState(ticking,baseline+30000)),true);
+assert.equal(timerState(ticking,baseline+60000).status,'finished');
+assert.equal(acceptsTimedAnswer(timerState(ticking,baseline+60000)),false);
+assert.equal(timerState({...timerQuestion,timer_remaining_seconds:22},baseline).status,'paused');
+assert.equal(clientTimer({status:'running',duration:60,ends_at:ticking.timer_ends_at},baseline+15000).remaining,45);
+assert.equal(formatCountdown(65),'01:05');
+console.log('✓ 8 source files passed node --check');
 console.log('✓ 8 aggregation checks passed');
+
+console.log('✓ 9 timer behavior checks passed');

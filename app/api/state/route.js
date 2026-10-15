@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { AppError,assert,isAdmin,db,getRoom,protectQuestion } from '@/lib/server';
 import { aggregate } from '@/lib/results';
+import { timerState } from '@/lib/timer';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -22,10 +23,10 @@ export async function GET(request){
     let hasAnswered=false;
     const visitorId=url.searchParams.get('visitorId')||'';
     if(visitorId && /^[a-zA-Z0-9_-]{16,100}$/.test(visitorId))hasAnswered=responses.some(r=>r.visitor_id===visitorId);
-    const data={ok:true,room:{code:room.code,title:room.title,status:room.status,theme:room.theme,active_question_id:room.active_question_id},
+    const data={ok:true,server_now:new Date().toISOString(),timer:q?timerState(q):null,room:{code:room.code,title:room.title,status:room.status,theme:room.theme,active_question_id:room.active_question_id},
       question:protectQuestion(q,admin||revealed),count:responses.length,result:revealed||admin?result:null,hasAnswered};
     if(admin){
-      data.questions=questions.map(qq=>({id:qq.id,ord:qq.ord,text:qq.text,type:qq.type,options:qq.options,config:qq.config,revealed:qq.revealed}));
+      data.questions=questions.map(qq=>({id:qq.id,ord:qq.ord,text:qq.text,type:qq.type,options:qq.options,config:qq.config,revealed:qq.revealed,timer_seconds:qq.timer_seconds||0}));
       data.responses=responses.map(r=>({id:r.id,name:r.display_name,value:r.value,at:r.created_at})).reverse();
       data.admin=true;
     }

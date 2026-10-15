@@ -2,11 +2,26 @@
 
 Aplikasi presentasi interaktif (berbahasa Indonesia) dengan 7 format pertanyaan, layar presenter, layar peserta dan proyektor. Kode sumber siap untuk diimpor ke GitHub/Vercel; **belum di-deploy** dan memerlukan kredensial pengguna.
 
+## V2.1 — Pembaruan dari V2 (BACA INI DULU)
+
+Jika sebelumnya **sudah menggunakan V2 Supabase di Vercel**, jangan buat database baru dan jangan hapus room lama.
+
+1. Buka **Supabase project yang sudah dipakai** → **SQL Editor**.
+2. Jalankan `supabase/upgrade_v2_to_v2_1.sql` (hanya menambah kolom timer; tidak menghapus jawaban).
+3. Ganti source code V2 Anda dengan isi paket ini dalam repository GitHub yang terhubung ke Vercel. **Jangan** menimpa `.env.local`/membagikan secret.
+4. Deploy ulang di Vercel. **Environment variables lama tetap sama**, tidak perlu Gemini API key baru.
+5. Di menu **Pertanyaan**, pilih durasi timer per pertanyaan atau atur timer pertanyaan aktif pada **Kontrol sesi**, lalu klik **Mulai**.
+6. Timer juga tampil di **Hasil Langsung**, HP audiens, dan layar proyektor.
+
+Catatan: durasi 0 berarti tanpa timer. Timer yang belum dimulai atau dijeda akan menahan pengiriman jawaban; setelah hitungan mencapai 00:00, server menolak jawaban baru. **Ulangi** mengatur ulang waktu, bukan menghapus jawaban. Saat pindah pertanyaan aktif, timer pertanyaan baru kembali ke posisi siap. Menu **Pertanyaan** untuk penyusunan/aktivasi pertanyaan; **Hasil Langsung** untuk melihat hasil dan analisis.
+
+Label halaman yang menyebut teknologi AI/Gemini dihapus dari antarmuka, tetapi Gemini tetap berjalan di server ketika tombol **Analisis jawaban** ditekan. Pertimbangkan kebijakan privasi Anda karena teks jawaban akan dikirim ke layanan tersebut untuk analisis.
+
 ## Fitur
 
 | Format | Jawaban peserta | Hasil |
 |---|---|---|
-| AI Insight | Teks bebas | Gemini membentuk 1–6 kelompok makna + ringkasan + insight |
+| Insight | Teks bebas | Gemini membentuk 1–6 kelompok makna + ringkasan + insight |
 | Word Cloud | 1–6 kata | Awan kata otomatis berdasarkan frekuensi |
 | Multiple Choice | Satu / beberapa pilihan (opsional) | Diagram batang, jumlah, persentase |
 | Quiz | Satu pilihan | Diagram dan jawaban benar ketika presenter membuka hasil |
@@ -19,7 +34,7 @@ Aplikasi presentasi interaktif (berbahasa Indonesia) dengan 7 format pertanyaan,
 - Hasil tampil otomatis setelah presenter memilih **Tampilkan hasil**. Data nonpublik tidak diekspos oleh API.
 - Data disimpan di Supabase Postgres dan dapat diekspor CSV per pertanyaan aktif.
 - 5 tema warna, QR code, kode room, panel proyektor fullscreen, polling setiap 4 detik.
-- Gemini API dipanggil **hanya di backend** dan hanya ketika presenter klik **Analisis Gemini** (atau analisis ulang). Tidak ada fallback kata kunci untuk AI Insight.
+- Gemini API dipanggil **hanya di backend** dan hanya ketika presenter klik **Analisis jawaban** (atau analisis ulang). Tidak ada fallback kata kunci untuk AI Insight.
 
 ## 1. Siapkan Supabase
 
@@ -74,10 +89,10 @@ Akses <http://localhost:3000>, login dengan `ADMIN_PIN` dan buat sesi.
 2. Tambah **Word Cloud**: "Satu kata untuk menggambarkan transformasi data?"
 3. Presenter membagikan kode room di layar proyektor. Jawaban mulai masuk.
 4. Klik **Tampilkan hasil** → awan kata tampil untuk audiens dan proyektor.
-5. Tambah **AI Insight**: "Apa inti dari slide ini?" lalu aktifkan pertanyaannya.
-6. Saat jawaban masuk, klik **Analisis dengan Gemini AI** → **Tampilkan hasil**.
+5. Tambah **Insight**: "Apa inti dari slide ini?" lalu aktifkan pertanyaannya.
+6. Saat jawaban masuk, klik **Analisis jawaban** → **Tampilkan hasil**.
 7. Tambahkan Poll/Quiz/Open Wall/Ranking/Scale untuk ronde berikutnya.
-8. Di tab **Live responses**, ekspor CSV jika perlu.
+8. Di tab **Hasil Langsung**, ekspor CSV jika perlu.
 
 ## Keamanan & batasan starter
 
@@ -87,7 +102,7 @@ Akses <http://localhost:3000>, login dengan `ADMIN_PIN` dan buat sesi.
 - Event sudah menggunakan polling 4 detik, **bukan** WebSocket. Skala besar perlu Supabase Realtime/optimasi agregasi server.
 - Setiap analisis Gemini memproses maksimal **300 jawaban**, sedangkan halaman mengambil maksimal **1.000** jawaban untuk hasil. Untuk event skala lebih besar tambahkan pagination dan job queue.
 - Kategori AI bisa keliru, mohon tinjau sebelum menampilkan hasil. Respons peserta dikirim ke Gemini saat analisis; jangan memasukkan data pribadi yang sensitif.
-- Tipe kuis ini adalah **kuis pilihan ganda dengan reveal jawaban benar**, belum memiliki ranking poin atau timer/leaderboard.
+- Tipe kuis ini adalah **kuis pilihan ganda dengan reveal jawaban benar**, belum memiliki ranking poin atau leaderboard (timer per-pertanyaan tersedia).
 - Belum ada pembatasan rate login PIN ataupun endpoint peserta untuk penggunaan publik berskala besar. Tambahkan rate limit (Upstash/Cloudflare) sebelum traffic besar.
 - Data nyata/konfigurasi belum diuji end-to-end di Supabase, Gemini, atau Vercel tanpa kredensial yang sah. File disediakan sebagai starter proyek yang dapat dikembangkan.
 
@@ -110,7 +125,7 @@ supabase/schema.sql           # SQL database
 
 ## Pengembangan yang disarankan
 
-- Quiz leaderboard & countdown timer.
+- Quiz leaderboard dan sistem poin (timer countdown per pertanyaan sudah tersedia).
 - Q&A dengan likes, moderation dan peringkat pertanyaan.
 - Preset template pertanyaan, menyimpan draft, urutan drag-drop.
 - Grafik export PNG/PDF, laporan AI multi-pertanyaan.

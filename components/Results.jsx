@@ -6,19 +6,19 @@ export function Results({question, result, large=false}){
   if(!result)return <div className="empty-panel"><Clock3 size={26}/><strong>Hasil masih disembunyikan</strong><span>Presenter akan menampilkan hasil setelah semua peserta menjawab.</span></div>;
   const {type,total}=result;
   if(type==='insight'){
-    if(!result.analysis)return <div className="empty-panel"><Sparkles size={28}/><strong>Analisis Gemini belum dijalankan</strong><span>{total} jawaban terkumpul · Presenter perlu klik Analisis Gemini.</span></div>;
+    if(!result.analysis)return <div className="empty-panel"><Sparkles size={28}/><strong>Ringkasan belum dibuat</strong><span>{total} jawaban terkumpul · Presenter perlu klik Analisis jawaban.</span></div>;
     const analysis=result.analysis;
     const colors=['#7357e8','#24b4ac','#e6a352','#ef7b7c','#5d9ae7','#a18aef','#9ca3af'];
     return <div className="results-wrap">
       {result.stale&&<div className="notice amber">Ada jawaban baru sejak analisis terakhir. Klik “Analisis ulang” agar kategori diperbarui.</div>}
-      <div className="ai-summary"><span className="eyebrow"><Sparkles size={15}/> AI SUMMARY</span><p>{analysis.summary}</p><div className="ai-takeaway"><Quote size={17}/>{analysis.takeaway}</div></div>
+      <div className="ai-summary"><span className="eyebrow"><Sparkles size={15}/> RINGKASAN HASIL</span><p>{analysis.summary}</p><div className="ai-takeaway"><Quote size={17}/>{analysis.takeaway}</div></div>
       <div className="results-heading"><h3>Kelompok jawaban</h3><span>{result.analyzed_count} dianalisis</span></div>
       <div className="theme-list">{(analysis.categories||[]).map((c,i)=><div className="theme-item" key={i}>
         <div className="theme-row"><strong><i className="color-dot" style={{background:colors[i%colors.length]}}/>{c.name}</strong><span><b>{c.count}</b> · {Math.round(c.count/(result.analyzed_count||1)*100)}%</span></div>
         <div className="bar-track"><div className="bar-fill" style={{width:`${100*c.count/(result.analyzed_count||1)}%`,background:colors[i%colors.length]}}/></div>
         {!large&&c.examples?.[0]&&<div className="example">“{c.examples[0]}”</div>}
       </div>)}</div>
-      <div className="footnote">AI mengelompokkan gagasan secara otomatis; kategori bisa mengandung kekeliruan interpretasi.</div>
+      <div className="footnote">Kategori dibuat dari isi jawaban dan dapat ditinjau kembali oleh presenter.</div>
     </div>
   }
   if(type==='wordcloud'){
